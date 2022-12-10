@@ -84,10 +84,10 @@ func get(endpoint Endpoint, timeout Timeout) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func ReadConfig(path string) (map[string]Service, error) {
+func ReadConfig(config string) (map[string]Service, error) {
 	services := map[string]Service{}
 
-	_, err := toml.DecodeFile(path, &services)
+	_, err := toml.Decode(config, &services)
 	if err != nil {
 		return nil, err
 	}

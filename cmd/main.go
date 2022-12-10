@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"sync"
@@ -34,9 +35,11 @@ func log(serviceName string, err error) {
 	}
 }
 
+//go:embed services.toml
+var config string
+
 func main() {
-	// TODO: embed "services.toml" file
-	services, err := sermon.ReadConfig("services.toml")
+	services, err := sermon.ReadConfig(config)
 	if err != nil {
 		fmt.Printf("Error reading config file, %s\n", err)
 		os.Exit(1)
