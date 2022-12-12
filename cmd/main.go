@@ -9,24 +9,22 @@ import (
 	"gitlab.com/germandv/sermon"
 )
 
-func withRetry(
+func withRetry[T any, U any](
 	maxAttempts int,
-	fn func(service sermon.Service) *sermon.ServiceStatus,
-	shouldRetry func(status *sermon.ServiceStatus) bool,
-) func(service sermon.Service) *sermon.ServiceStatus {
+	fn func(service T) *U,
+	shouldRetry func(status *U) bool,
+) func(item T) *U {
 	attempts := 0
 
-	return func(service sermon.Service) *sermon.ServiceStatus {
-		result := &sermon.ServiceStatus{}
-
+	return func(item T) *U {
+		result := new(U)
 		for attempts < maxAttempts {
 			attempts++
-			result = fn(service)
+			result = fn(item)
 			if !shouldRetry(result) {
 				break
 			}
 		}
-
 		return result
 	}
 }

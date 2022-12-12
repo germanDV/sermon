@@ -36,9 +36,9 @@ func (r *Report) Log() {
 
 	for _, service := range r.Services {
 		if !service.Healthy {
-			fmt.Printf("[ERROR] GET %s: %s\n", service.Name, service.Err)
+			fmt.Printf("GET %s -> ERROR: %s\n", service.Name, service.Err)
 		} else {
-			fmt.Printf("[OK] GET %s\n", service.Name)
+			fmt.Printf("GET %s -> OK\n", service.Name)
 		}
 	}
 }
