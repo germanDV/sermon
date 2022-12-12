@@ -48,6 +48,7 @@ func (r *Report) Log() {
 
 // Email sends Report via email.
 // TODO: implement!
-func (r *Report) Email(to string) {
+func (r *Report) Email(to string) error {
 	fmt.Printf("Emailing report to %q (WIP).\n", to)
+	return nil
 }
