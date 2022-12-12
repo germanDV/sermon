@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/smtp"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"text/template"
+
+	"gitlab.com/germandv/sermon/internal/mailer"
 )
 
 // ServiceStatus contains information about a service after checking its health.
@@ -60,12 +61,12 @@ func (r *Report) Log(w io.Writer) {
 	fmt.Fprint(w, sb.String())
 }
 
-// Email sends Report via email.
-func (r *Report) Email(to string) error {
+// getEmailConfig creates a mailer.Config with information from env vars.
+func getEmailConfig() (*mailer.Config, error) {
 	username, okU := os.LookupEnv("EMAIL_USERNAME")
 	password, okP := os.LookupEnv("EMAIL_PASSWORD")
 	if !okU || !okP {
-		return errors.New("The following env vars must be present to be able to email the report: EMAIL_USERNAME, EMAIL_PASSWORD")
+		return nil, errors.New("The following env vars must be present to be able to email the report: EMAIL_USERNAME, EMAIL_PASSWORD")
 	}
 
 	host := os.Getenv("EMAIL_HOST")
@@ -77,41 +78,63 @@ func (r *Report) Email(to string) error {
 	if portStr == "" {
 		portStr = "587"
 	}
+
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		return errors.New("EMAIL_PORT must be a number")
+		return nil, errors.New("EMAIL_PORT must be a number")
+	}
+
+	return &mailer.Config{
+		Username: username,
+		Password: password,
+		Host:     host,
+		Port:     port,
+	}, nil
+}
+
+// getEmail parses the email template to populate a proper *mailer.Mail.
+func getEmail(to string, msg string) (*mailer.Mail, error) {
+	emailData := struct {
+		To   string
+		Body string
+	}{
+		To:   to,
+		Body: msg,
+	}
+
+	tpl, err := template.ParseFiles(filepath.Join("templates", "email.tmpl"))
+	if err != nil {
+		return nil, err
+	}
+
+	var content bytes.Buffer
+	err = tpl.Execute(&content, emailData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mailer.Mail{
+		To:   []string{to},
+		Body: content.Bytes(),
+	}, nil
+}
+
+// Email sends Report via email.
+func (r *Report) Email(to string) error {
+	cfg, err := getEmailConfig()
+	if err != nil {
+		return err
 	}
 
 	var msg bytes.Buffer
 	r.Log(&msg)
 
-	email := struct {
-		To   string
-		Body string
-	}{
-		To:   to,
-		Body: msg.String(),
-	}
-
-	tpl, err := template.ParseFiles(filepath.Join("templates", "email.tmpl"))
+	email, err := getEmail(to, msg.String())
 	if err != nil {
 		return err
 	}
 
-	var content bytes.Buffer
-	err = tpl.Execute(&content, email)
-
-	auth := smtp.PlainAuth("", username, password, host)
-
-	err = smtp.SendMail(
-		fmt.Sprintf("%s:%d", host, port),
-		auth,
-		username,
-		[]string{to},
-		content.Bytes(),
-	)
-
-	return err
+	return mailer.Send(cfg, email)
 }
 
 // EmailFail sends the Report via email only if there are unhealthy services.
