@@ -71,6 +71,7 @@ func (a *Attempts) UnmarshalText(text []byte) error {
 	return nil
 }
 
+// Service represents a web service which health is to be monitored.
 type Service struct {
 	Name     string
 	Endpoint Endpoint
@@ -78,6 +79,8 @@ type Service struct {
 	Timeout  Timeout
 }
 
+// Config represents the structure of the TOML file that lists the services
+// to be checked and some common settings.
 type Config struct {
 	Email    Email
 	Attempts Attempts
@@ -102,6 +105,7 @@ func get(endpoint Endpoint, timeout Timeout) (int, error) {
 	return resp.StatusCode, nil
 }
 
+// ReadConfig parses the TOML file that lists the services to monitor.
 func ReadConfig(config string) (*Config, error) {
 	cfg := &Config{}
 
@@ -113,6 +117,7 @@ func ReadConfig(config string) (*Config, error) {
 	return cfg, nil
 }
 
+// Health makes an HTTP request to check the health of the service.
 func (s *Service) Health() error {
 	status, err := get(s.Endpoint, s.Timeout)
 	if err != nil {
