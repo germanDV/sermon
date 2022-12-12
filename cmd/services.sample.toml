@@ -1,11 +1,14 @@
-["go.dev"]
+email = "notify@me.com"
+attempts = 2
+
+[services]
+
+[services."go.dev"]
 endpoint = "https://go.dev/"
 codes = [200]
 timeout = "3s"
-email = "notify@me.com"
 
-["debian.org"]
+[services."debian.org"]
 endpoint = "https://debian.org"
 codes = [200, 204]
 timeout = "5s"
-email = "notify@me.com"

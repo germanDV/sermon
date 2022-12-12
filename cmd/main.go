@@ -10,16 +10,17 @@ import (
 	"gitlab.com/germandv/sermon/internal/report"
 )
 
-func checkAll(services map[string]sermon.Service) *report.Report {
+func checkAll(config *sermon.Config) *report.Report {
 	summary := &report.Report{}
 	var wg sync.WaitGroup
 
-	for name, service := range services {
+	for name, service := range config.Services {
 		s := service
 		wg.Add(1)
 		s.Name = name
 		go func() {
-			err := s.Health(&wg)
+			defer wg.Done()
+			err := s.Health()
 			summary.Add(&report.ServiceStatus{
 				Name:    s.Name,
 				Healthy: err == nil,
@@ -41,16 +42,16 @@ func log(serviceName string, err error) {
 }
 
 //go:embed services.toml
-var config string
+var configFile string
 
 func main() {
-	services, err := sermon.ReadConfig(config)
+	config, err := sermon.ReadConfig(configFile)
 	if err != nil {
 		fmt.Printf("Error reading config file, %s\n", err)
 		os.Exit(1)
 	}
 
-	summary := checkAll(services)
+	summary := checkAll(config)
 	summary.Log()
-	summary.Email("TODO")
+	summary.Email(config.Email.Address)
 }

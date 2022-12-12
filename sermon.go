@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -53,9 +52,23 @@ type Email struct {
 
 func (e *Email) UnmarshalText(text []byte) error {
 	if EmailRX.Match(text) {
+		e.Address = string(text)
 		return nil
 	}
 	return fmt.Errorf("Invalid email address: %s", text)
+}
+
+type Attempts struct {
+	Value int
+}
+
+func (a *Attempts) UnmarshalText(text []byte) error {
+	n, err := strconv.Atoi(string(text))
+	if err != nil || n < 1 || n > 10 {
+		return fmt.Errorf("Invalid number of attempts (min 1, max 10): %s", text)
+	}
+	a.Value = n
+	return nil
 }
 
 type Service struct {
@@ -63,7 +76,12 @@ type Service struct {
 	Endpoint Endpoint
 	Codes    []StatusCode
 	Timeout  Timeout
+}
+
+type Config struct {
 	Email    Email
+	Attempts Attempts
+	Services map[string]Service
 }
 
 func in(items []StatusCode, item int) bool {
@@ -84,20 +102,18 @@ func get(endpoint Endpoint, timeout Timeout) (int, error) {
 	return resp.StatusCode, nil
 }
 
-func ReadConfig(config string) (map[string]Service, error) {
-	services := map[string]Service{}
+func ReadConfig(config string) (*Config, error) {
+	cfg := &Config{}
 
-	_, err := toml.Decode(config, &services)
+	_, err := toml.Decode(config, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return services, nil
+	return cfg, nil
 }
 
-func (s *Service) Health(wg *sync.WaitGroup) error {
-	defer wg.Done()
-
+func (s *Service) Health() error {
 	status, err := get(s.Endpoint, s.Timeout)
 	if err != nil {
 		return err
