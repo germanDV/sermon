@@ -2,6 +2,7 @@ package sermon
 
 import (
 	"fmt"
+	"os"
 	"sync"
 )
 
@@ -61,9 +62,9 @@ func Run(configFileContent string) error {
 	}
 
 	report := CheckAll(config)
-	report.Log()
+	report.Log(os.Stdout)
 
-	err = report.Email(config.Email.Address)
+	err = report.EmailFail(config.Email.Address)
 	if err != nil {
 		return err
 	}

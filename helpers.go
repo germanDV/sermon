@@ -43,3 +43,14 @@ func withRetry[T any, U any](
 		return result
 	}
 }
+
+// Some applies the given function to every element in the slice and returns
+// `true` if at least one of the invocations returned `true`.
+func some[T any](arr []T, fn func(T) bool) bool {
+	for _, i := range arr {
+		if fn(i) {
+			return true
+		}
+	}
+	return false
+}
