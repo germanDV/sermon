@@ -7,11 +7,10 @@ import (
 	"sync"
 
 	"gitlab.com/germandv/sermon"
-	"gitlab.com/germandv/sermon/internal/report"
 )
 
-func checkAll(config *sermon.Config) *report.Report {
-	summary := &report.Report{}
+func checkAll(config *sermon.Config) *sermon.Report {
+	summary := &sermon.Report{}
 	var wg sync.WaitGroup
 
 	for name, service := range config.Services {
@@ -21,7 +20,7 @@ func checkAll(config *sermon.Config) *report.Report {
 		go func() {
 			defer wg.Done()
 			err := s.Health()
-			summary.Add(&report.ServiceStatus{
+			summary.Add(&sermon.ServiceStatus{
 				Name:    s.Name,
 				Healthy: err == nil,
 				Err:     err,
@@ -31,14 +30,6 @@ func checkAll(config *sermon.Config) *report.Report {
 
 	wg.Wait()
 	return summary
-}
-
-func log(serviceName string, err error) {
-	if err != nil {
-		fmt.Printf("[ERROR] GET %s: %s\n", serviceName, err)
-	} else {
-		fmt.Printf("[OK] GET %s\n", serviceName)
-	}
 }
 
 //go:embed services.toml
