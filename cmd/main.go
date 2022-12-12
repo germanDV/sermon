@@ -7,24 +7,29 @@ import (
 	"sync"
 
 	"gitlab.com/germandv/sermon"
+	"gitlab.com/germandv/sermon/internal/report"
 )
 
-func checkAll(services map[string]sermon.Service) {
+func checkAll(services map[string]sermon.Service) *report.Report {
+	summary := &report.Report{}
 	var wg sync.WaitGroup
+
 	for name, service := range services {
 		s := service
 		wg.Add(1)
 		s.Name = name
 		go func() {
 			err := s.Health(&wg)
-			if err != nil {
-				log(s.Name, err)
-			} else {
-				log(s.Name, nil)
-			}
+			summary.Add(&report.ServiceStatus{
+				Name:    s.Name,
+				Healthy: err == nil,
+				Err:     err,
+			})
 		}()
 	}
+
 	wg.Wait()
+	return summary
 }
 
 func log(serviceName string, err error) {
@@ -45,5 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	checkAll(services)
+	summary := checkAll(services)
+	summary.Log()
+	summary.Email("TODO")
 }
