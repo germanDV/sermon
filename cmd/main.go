@@ -9,22 +9,55 @@ import (
 	"gitlab.com/germandv/sermon"
 )
 
+func withRetry(
+	maxAttempts int,
+	fn func(service sermon.Service) *sermon.ServiceStatus,
+	shouldRetry func(status *sermon.ServiceStatus) bool,
+) func(service sermon.Service) *sermon.ServiceStatus {
+	attempts := 0
+
+	return func(service sermon.Service) *sermon.ServiceStatus {
+		result := &sermon.ServiceStatus{}
+
+		for attempts < maxAttempts {
+			attempts++
+			result = fn(service)
+			if !shouldRetry(result) {
+				break
+			}
+		}
+
+		return result
+	}
+}
+
+func check(service sermon.Service) *sermon.ServiceStatus {
+	err := service.Health()
+	return &sermon.ServiceStatus{
+		Name:    service.Name,
+		Healthy: err == nil,
+		Err:     err,
+	}
+}
+
 func checkAll(config *sermon.Config) *sermon.Report {
 	summary := &sermon.Report{}
 	var wg sync.WaitGroup
 
 	for name, service := range config.Services {
-		s := service
 		wg.Add(1)
+		s := service
 		s.Name = name
+
 		go func() {
 			defer wg.Done()
-			err := s.Health()
-			summary.Add(&sermon.ServiceStatus{
-				Name:    s.Name,
-				Healthy: err == nil,
-				Err:     err,
+
+			checkWithRetry := withRetry(config.Attempts.Value, check, func(ss *sermon.ServiceStatus) bool {
+				return !ss.Healthy
 			})
+
+			status := checkWithRetry(s)
+			summary.Add(status)
 		}()
 	}
 
