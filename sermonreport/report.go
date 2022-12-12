@@ -1,4 +1,4 @@
-package sermon
+package sermonreport
 
 import (
 	"bytes"
@@ -13,25 +13,19 @@ import (
 	"text/template"
 
 	"gitlab.com/germandv/sermon/internal/mailer"
+	"gitlab.com/germandv/sermon/sermoncore"
 )
-
-// ServiceStatus contains information about a service after checking its health.
-type ServiceStatus struct {
-	Name    string
-	Healthy bool
-	Err     error
-}
 
 // Report consolidates information about health of all services.
 type Report struct {
-	Services   []*ServiceStatus
+	Services   []*sermoncore.ServiceStatus
 	Successful int
 	Failed     int
 	mu         sync.Mutex
 }
 
 // Add adds information about a service to a Report in a concurrency-safe fashion.
-func (r *Report) Add(service *ServiceStatus) {
+func (r *Report) Add(service *sermoncore.ServiceStatus) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if service.Healthy {
@@ -139,7 +133,7 @@ func (r *Report) Email(to string) error {
 
 // EmailFail sends the Report via email only if there are unhealthy services.
 func (r *Report) EmailFail(to string) error {
-	someUnhealthy := some(r.Services, func(ss *ServiceStatus) bool {
+	someUnhealthy := some(r.Services, func(ss *sermoncore.ServiceStatus) bool {
 		return !ss.Healthy
 	})
 
@@ -149,4 +143,15 @@ func (r *Report) EmailFail(to string) error {
 
 	fmt.Println("All services healthy, skipping email.")
 	return nil
+}
+
+// Some applies the given function to every element in the slice and returns
+// `true` if at least one of the invocations returned `true`.
+func some[T any](arr []T, fn func(T) bool) bool {
+	for _, i := range arr {
+		if fn(i) {
+			return true
+		}
+	}
+	return false
 }
