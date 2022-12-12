@@ -44,7 +44,7 @@ func CheckAll(config *sermonconfig.Config) *sermonreport.Report {
 
 // Run parses the config, checks all services and emails the results.
 func Run(configFileContent string) error {
-	config, err := sermonconfig.Read(configFileContent)
+	config, err := sermonconfig.Parse(configFileContent)
 	if err != nil {
 		return err
 	}

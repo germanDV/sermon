@@ -44,8 +44,8 @@ type Config struct {
 	Services map[string]sermoncore.Service
 }
 
-// ReadConfig parses the TOML file that lists the services to monitor.
-func Read(config string) (*Config, error) {
+// Parse parses the TOML file that lists the services to monitor.
+func Parse(config string) (*Config, error) {
 	cfg := &Config{}
 
 	_, err := toml.Decode(config, cfg)
