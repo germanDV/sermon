@@ -36,7 +36,7 @@ func (r *Report) Add(service *sermoncore.ServiceStatus) {
 	r.Services = append(r.Services, service)
 }
 
-// Log prints Report information to stdout.
+// Log prints Report information to the given io.Writer.
 func (r *Report) Log(w io.Writer) {
 	sb := strings.Builder{}
 
