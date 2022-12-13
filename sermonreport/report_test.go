@@ -30,7 +30,7 @@ func TestGetEmail(t *testing.T) {
 		config, err := getEmailConfig()
 		expect.NoError(t, err)
 		expect.Equal(t, config.Username, username)
-		expect.Equal(t, config.Password, password)
+		expect.Equal(t, config.Password.Expose(), password)
 		expect.Equal(t, config.Host, host)
 		expect.Equal(t, config.Port, 486)
 		os.Unsetenv("EMAIL_USERNAME")

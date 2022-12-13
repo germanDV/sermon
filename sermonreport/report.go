@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"gitlab.com/germandv/sermon/internal/mailer"
+	"gitlab.com/germandv/sermon/internal/secret"
 	"gitlab.com/germandv/sermon/sermoncore"
 )
 
@@ -87,7 +88,7 @@ func getEmailConfig() (*mailer.Config, error) {
 
 	return &mailer.Config{
 		Username: username,
-		Password: password,
+		Password: secret.New(password),
 		Host:     host,
 		Port:     port,
 	}, nil
