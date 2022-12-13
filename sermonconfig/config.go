@@ -1,9 +1,11 @@
 package sermonconfig
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"gitlab.com/germandv/sermon/sermoncore"
@@ -51,6 +53,25 @@ func Parse(config string) (*Config, error) {
 	_, err := toml.Decode(config, cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if cfg.Email.Address == "" {
+		return nil, errors.New("Missing `email`")
+	}
+	if cfg.Attempts.Value == 0 {
+		return nil, errors.New("Missing `attempts`")
+	}
+
+	for name, s := range cfg.Services {
+		if s.Endpoint.URL == nil {
+			return nil, fmt.Errorf("Missing `endpoint` for service %s", name)
+		}
+		if len(s.Codes) == 0 {
+			return nil, fmt.Errorf("Missing `codes` for service %s", name)
+		}
+		if s.Timeout.Duration == time.Duration(0) {
+			return nil, fmt.Errorf("Missing `timeout` for service %s", name)
+		}
 	}
 
 	return cfg, nil

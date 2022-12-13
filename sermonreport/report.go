@@ -16,6 +16,11 @@ import (
 	"gitlab.com/germandv/sermon/sermoncore"
 )
 
+const (
+	DefaultHost = "smtp.gmail.com"
+	DefaultPort = 587
+)
+
 // Report consolidates information about health of all services.
 type Report struct {
 	Services   []*sermoncore.ServiceStatus
@@ -65,17 +70,19 @@ func getEmailConfig() (*mailer.Config, error) {
 
 	host := os.Getenv("EMAIL_HOST")
 	if host == "" {
-		host = "smtp.gmail.com"
+		host = DefaultHost
 	}
 
+	var port int
 	portStr := os.Getenv("EMAIL_PORT")
-	if portStr == "" {
-		portStr = "587"
-	}
-
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		return nil, errors.New("EMAIL_PORT must be a number")
+	if portStr != "" {
+		var err error
+		port, err = strconv.Atoi(portStr)
+		if err != nil {
+			return nil, errors.New("EMAIL_PORT must be a number")
+		}
+	} else {
+		port = DefaultPort
 	}
 
 	return &mailer.Config{

@@ -1,0 +1,14 @@
+email = "notify@me.io"
+attempts = 2
+
+[services]
+
+[services."archlinux.org"]
+endpoint = "https://archlinux.org"
+codes = ["ten"]
+timeout = "5s"
+
+[services."debian.org"]
+endpoint = "https://debian.org"
+codes = [200, 204]
+timeout = "5s"

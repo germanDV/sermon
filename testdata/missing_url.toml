@@ -1,0 +1,9 @@
+email = "notify@me.io"
+attempts = 2
+
+[services]
+
+[services."archlinux.org"]
+codes = [200]
+timeout = "5s"
+

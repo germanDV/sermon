@@ -2,10 +2,11 @@ package sermoncore
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"gitlab.com/germandv/sermon/internal/httpclient"
 )
 
 type Timeout struct {
@@ -57,8 +58,8 @@ type ServiceStatus struct {
 }
 
 // Health makes an HTTP request to check the health of the service.
-func (s *Service) Health() error {
-	status, err := get(s.Endpoint, s.Timeout)
+func (s *Service) Health(client httpclient.HttpClient) error {
+	status, err := get(client, s.Endpoint)
 	if err != nil {
 		return err
 	}
@@ -82,8 +83,8 @@ func in(items []StatusCode, item int) bool {
 }
 
 // get makes a GET HTTP request and returns the response status code.
-func get(endpoint Endpoint, timeout Timeout) (int, error) {
-	client := &http.Client{Timeout: timeout.Duration}
+func get(client httpclient.HttpClient, endpoint Endpoint) (int, error) {
+	fmt.Printf("GET %s\n", endpoint.URL.String())
 	resp, err := client.Get(endpoint.URL.String())
 	if err != nil {
 		return 0, err

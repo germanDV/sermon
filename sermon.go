@@ -1,9 +1,11 @@
 package sermon
 
 import (
+	"net/http"
 	"os"
 	"sync"
 
+	"gitlab.com/germandv/sermon/internal/httpclient"
 	"gitlab.com/germandv/sermon/sermonconfig"
 	"gitlab.com/germandv/sermon/sermoncore"
 	"gitlab.com/germandv/sermon/sermonreport"
@@ -11,7 +13,8 @@ import (
 
 // Check verifies the health of a Service.
 func Check(s sermoncore.Service) *sermoncore.ServiceStatus {
-	err := s.Health()
+	client := httpclient.New(&http.Client{Timeout: s.Timeout.Duration})
+	err := s.Health(client)
 	return &sermoncore.ServiceStatus{
 		Name:    s.Name,
 		Healthy: err == nil,
