@@ -84,7 +84,6 @@ func in(items []StatusCode, item int) bool {
 
 // get makes a GET HTTP request and returns the response status code.
 func get(client httpclient.HttpClient, endpoint Endpoint) (int, error) {
-	fmt.Printf("GET %s\n", endpoint.URL.String())
 	resp, err := client.Get(endpoint.URL.String())
 	if err != nil {
 		return 0, err

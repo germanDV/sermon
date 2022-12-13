@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	"gitlab.com/germandv/sermon/internal/mailer"
 	"gitlab.com/germandv/sermon/internal/secret"
@@ -46,9 +47,10 @@ func (r *Report) Add(service *sermoncore.ServiceStatus) {
 func (r *Report) Log(w io.Writer) {
 	sb := strings.Builder{}
 
+	sb.WriteString(fmt.Sprintf("Date: %s\n", time.Now().UTC().Format(time.RFC1123)))
 	sb.WriteString(fmt.Sprintf("SUCCESSFUL: %d\n", r.Successful))
 	sb.WriteString(fmt.Sprintf("FAILED: %d\n", r.Failed))
-	sb.WriteString(fmt.Sprintf("TOTAL: %d\n\n", r.Successful+r.Failed))
+	sb.WriteString(fmt.Sprintf("TOTAL: %d\n", r.Successful+r.Failed))
 
 	for _, service := range r.Services {
 		if !service.Healthy {
@@ -149,7 +151,6 @@ func (r *Report) EmailFail(to string) error {
 		return r.Email(to)
 	}
 
-	fmt.Println("All services healthy, skipping email.")
 	return nil
 }
 
