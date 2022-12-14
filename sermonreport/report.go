@@ -2,11 +2,11 @@ package sermonreport
 
 import (
 	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -96,6 +96,9 @@ func getEmailConfig() (*mailer.Config, error) {
 	}, nil
 }
 
+//go:embed email.tmpl
+var emailTpl string
+
 // getEmail parses the email template to populate a proper *mailer.Mail.
 func getEmail(to string, msg string) (*mailer.Mail, error) {
 	emailData := struct {
@@ -106,13 +109,10 @@ func getEmail(to string, msg string) (*mailer.Mail, error) {
 		Body: msg,
 	}
 
-	tpl, err := template.ParseFiles(filepath.Join("templates", "email.tmpl"))
-	if err != nil {
-		return nil, err
-	}
+	tpl := template.Must(template.New("email").Parse(emailTpl))
 
 	var content bytes.Buffer
-	err = tpl.Execute(&content, emailData)
+	err := tpl.Execute(&content, emailData)
 	if err != nil {
 		return nil, err
 	}
